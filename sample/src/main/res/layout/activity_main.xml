@@ -63,6 +63,14 @@
             android:layout_marginLeft="50dp"
             android:text="Crypto" />
 
+
+        <Button
+            android:id="@+id/btn_lottie"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Lottie"
+            android:layout_gravity="center"/>
+
     </FrameLayout>
 
 </LinearLayout>

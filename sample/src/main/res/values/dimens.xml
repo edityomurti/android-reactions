@@ -2,4 +2,5 @@
 <resources>
     <dimen name="crypto_item_size">32dp</dimen>
     <dimen name="crypto_item_margin">8dp</dimen>
+    <dimen name="popup_margin">16dp</dimen>
 </resources>

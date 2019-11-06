@@ -27,6 +27,8 @@ configure<LibraryExtension> {
 dependencies {
     api(Libs.kotlin)
     api(Libs.support)
+    api(Libs.lottie)
+    api(Libs.material)
 }
 
 // Maven publishing

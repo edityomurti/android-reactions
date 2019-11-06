@@ -3,11 +3,11 @@ package com.github.pgreze.reactions
 import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.Drawable
-import android.support.annotation.ArrayRes
-import android.support.annotation.ColorInt
-import android.support.annotation.Px
-import android.support.v4.content.ContextCompat
 import android.widget.ImageView
+import androidx.annotation.ArrayRes
+import androidx.annotation.ColorInt
+import androidx.annotation.Px
+import androidx.core.content.ContextCompat
 import kotlin.math.roundToInt
 
 /**
@@ -16,6 +16,10 @@ import kotlin.math.roundToInt
  * @return if reaction selector should close.
  */
 typealias ReactionSelectedListener = (position: Int) -> Boolean
+
+typealias ReactionLottieSelectedListener = (position: Int, snipe: String?) -> Boolean
+
+typealias OnClickVoteLister = () -> Unit
 
 /**
  * Reaction text provider.
@@ -29,8 +33,30 @@ data class Reaction(
     val scaleType: ImageView.ScaleType = ImageView.ScaleType.FIT_CENTER
 )
 
+data class ReactionLottie(
+    val fileName: String
+)
+
 data class ReactionsConfig(
-    val reactions: Collection<Reaction>,
+        val reactions: Collection<Reaction>,
+        @Px val reactionSize: Int,
+        @Px val horizontalMargin: Int,
+        @Px val verticalMargin: Int,
+        /** Horizontal gravity compare to parent view or screen */
+    val popupGravity: PopupGravity,
+        /** Margin between dialog and screen border used by [PopupGravity] screen related values. */
+    val popupMargin: Int,
+        @ColorInt val popupColor: Int,
+        val reactionTextProvider: ReactionTextProvider,
+        val textBackground: Drawable,
+        @ColorInt val textColor: Int,
+        val textHorizontalPadding: Int,
+        val textVerticalPadding: Int,
+        val textSize: Float
+)
+
+data class ReactionsLottieConfig(
+    val reactions: Collection<ReactionLottie>,
     @Px val reactionSize: Int,
     @Px val horizontalMargin: Int,
     @Px val verticalMargin: Int,
@@ -176,6 +202,138 @@ class ReactionsConfigBuilder(val context: Context) {
     }
 
     fun build() = ReactionsConfig(
+        reactions = reactions.takeIf { it.isNotEmpty() }
+            ?: throw IllegalArgumentException("Empty reactions"),
+        popupGravity = popupGravity,
+        popupMargin = popupMargin,
+        popupColor = popupColor,
+        reactionSize = reactionSize,
+        horizontalMargin = horizontalMargin,
+        verticalMargin = verticalMargin,
+        reactionTextProvider = reactionTextProvider,
+        textBackground = textBackground
+            ?: ContextCompat.getDrawable(context, R.drawable.reactions_text_background)!!,
+        textColor = textColor,
+        textHorizontalPadding = textHorizontalPadding.takeIf { it != 0 }
+            ?: context.resources.getDimension(R.dimen.reactions_text_horizontal_padding).roundToInt(),
+        textVerticalPadding = textVerticalPadding.takeIf { it != 0 }
+            ?: context.resources.getDimension(R.dimen.reactions_text_vertical_padding).roundToInt(),
+        textSize = textSize.takeIf { it != 0f }
+            ?: context.resources.getDimension(R.dimen.reactions_text_size)
+    )
+}
+
+class ReactionsLottieConfigBuilder(val context: Context) {
+
+    // DSL friendly property based values, with default or empty values replaced during build
+
+    var reactions: Collection<ReactionLottie> = emptyList()
+
+    // reactions = listOf(R.drawable.img1, R.drawable.img2, ...)
+    var reactionFileNames: Array<String>
+        get() = throw NotImplementedError()
+        set(value) { withReactions(value) }
+
+    @Px
+    var reactionSize: Int =
+        context.resources.getDimensionPixelSize(R.dimen.reactions_item_size)
+
+    @Px
+    var horizontalMargin: Int =
+        context.resources.getDimensionPixelSize(R.dimen.reactions_item_margin)
+
+    @Px var verticalMargin: Int = horizontalMargin
+
+    var popupGravity: PopupGravity = PopupGravity.DEFAULT
+
+//    var popupMargin: Int = horizontalMargin
+    var popupMargin: Int = 0
+
+    @ColorInt
+    var popupColor: Int = Color.WHITE
+
+    var reactionTextProvider: ReactionTextProvider = NO_TEXT_PROVIDER
+
+    var reactionTexts: Int
+        get() = throw NotImplementedError()
+        set(@ArrayRes value) { withReactionTexts(value) }
+
+    var textBackground: Drawable? = null
+
+    @ColorInt
+    var textColor: Int = Color.WHITE
+
+    var textHorizontalPadding: Int = 0
+
+    var textVerticalPadding: Int = 0
+
+    var textSize: Float = 0f
+
+    // Builder pattern for Java
+
+    fun withReactions(reactions: Collection<ReactionLottie>) = this.also {
+        this.reactions = reactions
+    }
+
+    fun withReactions(
+        fileNames: Array<String>
+    ) = withReactions(fileNames.map {
+        ReactionLottie(it)
+    })
+
+    fun withReactionTexts(reactionTextProvider: ReactionTextProvider) = this.also {
+        this.reactionTextProvider = reactionTextProvider
+    }
+
+    fun withReactionTexts(@ArrayRes res: Int) = this.also {
+        reactionTextProvider = context.resources.getStringArray(res)::get
+    }
+
+    fun withReactionSize(reactionSize: Int) = this.also {
+        this.reactionSize = reactionSize
+    }
+
+    fun withHorizontalMargin(horizontalMargin: Int) = this.also {
+        this.horizontalMargin = horizontalMargin
+    }
+
+    fun withVerticalMargin(verticalMargin: Int) = this.also {
+        this.verticalMargin = verticalMargin
+    }
+
+    fun withPopupGravity(popupGravity: PopupGravity) = this.also {
+        this.popupGravity = popupGravity
+    }
+
+    fun withPopupMargin(popupMargin: Int) = this.also {
+        this.popupMargin = popupMargin
+    }
+
+    fun withPopupColor(@ColorInt popupColor: Int) = this.also {
+        this.popupColor = popupColor
+    }
+
+    fun withTextBackground(textBackground: Drawable) = this.also {
+        this.textBackground = textBackground
+    }
+
+    fun withTextColor(@ColorInt textColor: Int) = this.also {
+        this.textColor = textColor
+    }
+
+    fun withTextHorizontalPadding(textHorizontalPadding: Int) = this.also {
+        this.textHorizontalPadding = textHorizontalPadding
+    }
+
+    fun withTextVerticalPadding(textVerticalPadding: Int) = this.also {
+        this.textVerticalPadding = textVerticalPadding
+    }
+
+    fun withTextSize(textSize: Float) = this.also {
+        this.textSize = textSize
+    }
+
+    fun build() = ReactionsLottieConfig(
         reactions = reactions.takeIf { it.isNotEmpty() }
             ?: throw IllegalArgumentException("Empty reactions"),
         popupGravity = popupGravity,

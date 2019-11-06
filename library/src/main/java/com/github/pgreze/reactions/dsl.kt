@@ -2,13 +2,9 @@ package com.github.pgreze.reactions.dsl
 
 import android.content.Context
 import android.graphics.drawable.Drawable
-import android.support.v4.content.ContextCompat
 import android.widget.ImageView
-import com.github.pgreze.reactions.Reaction
-import com.github.pgreze.reactions.ReactionPopup
-import com.github.pgreze.reactions.ReactionSelectedListener
-import com.github.pgreze.reactions.ReactionsConfig
-import com.github.pgreze.reactions.ReactionsConfigBuilder
+import androidx.core.content.ContextCompat
+import com.github.pgreze.reactions.*
 
 fun reactionPopup(
         context: Context,
@@ -24,6 +20,14 @@ fun reactionConfig(
         init: ReactionsConfigBuilder.() -> Unit
 ): ReactionsConfig =
         ReactionsConfigBuilder(context)
+                .apply(init)
+                .build()
+
+fun reactionLottieConfig(
+        context: Context,
+        init: ReactionsLottieConfigBuilder.() -> Unit
+): ReactionsLottieConfig =
+        ReactionsLottieConfigBuilder(context)
                 .apply(init)
                 .build()
 
