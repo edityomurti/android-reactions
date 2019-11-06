@@ -91,20 +91,6 @@ class ReactionLottieViewGroup(context: Context, private val config: ReactionsLot
                 addView(it)
             }
 
-    private val reactionText: TextView = TextView(context)
-            .also {
-                it.textSize = config.textSize
-                it.setTextColor(config.textColor)
-                it.setPadding(
-                        config.textHorizontalPadding,
-                        config.textVerticalPadding,
-                        config.textHorizontalPadding,
-                        config.textVerticalPadding)
-                it.background = config.textBackground
-                it.visibility = View.GONE
-                addView(it)
-            }
-
     private val snipeArrow: ImageView = ImageView(context).also {
         it.layoutParams = LayoutParams(context.toDp(14), context.toDp(10))
         it.setImageResource(R.drawable.reactions_arrow_snipe)
@@ -154,7 +140,6 @@ class ReactionLottieViewGroup(context: Context, private val config: ReactionsLot
             field?.cancel()
 
             field = value
-            reactionText.visibility = View.GONE
             snipeLayout.visibility = View.GONE
             field?.duration = 100
             field?.start()
@@ -229,16 +214,6 @@ class ReactionLottieViewGroup(context: Context, private val config: ReactionsLot
             view.layout(left, top, right, bottom)
 
             prevX += view.width + iconDivider
-        }
-
-        if (reactionText.visibility == View.VISIBLE) {
-            reactionText.measure(0, 0)
-            val selectedView = (currentState as? ReactionLottieViewState.Selected)?.viewReaction ?: return
-            val top = selectedView.top - min(selectedView.layoutParams.size, reactionText.measuredHeight * 2)
-            val bottom = top + reactionText.measuredHeight
-            val left = selectedView.left + (selectedView.right - selectedView.left) / 2f - reactionText.measuredWidth / 2f
-            val right = left + reactionText.measuredWidth
-            reactionText.layout(left.toInt(), top, right.toInt(), bottom)
         }
 
         if (snipeLayout.visibility == View.VISIBLE) {
@@ -316,7 +291,7 @@ class ReactionLottieViewGroup(context: Context, private val config: ReactionsLot
                     val viewReaction = getIntersectedIcon(event.rawX, event.rawY)
                     val viewSnipe = getIntersectedSnipe(event.rawX, event.rawY)
                     setSnipeOnTouchListener(event.rawX, event.rawY)
-                    val onSnipeLayout = snipeLayout.isIntersected(event.rawX, event.rawY)
+                    val onSnipeLayout = snipeLayout.isIntersected(event.rawX, event.rawY) && snipeLayout.visibility == View.VISIBLE
 
                     if (onSnipeLayout) {
                     } else if (viewReaction == null) {
@@ -463,11 +438,9 @@ class ReactionLottieViewGroup(context: Context, private val config: ReactionsLot
 
                         override fun onAnimationEnd(animation: Animator?) {
                             val index = state?.viewReaction ?: return
-                            reactionText.text =
-                                    config.reactionTextProvider(reactions.indexOf(index))
-                                            ?: return
-//                            reactionText.visibility = View.VISIBLE
-                            snipeLayout.visibility = View.VISIBLE
+                            if (reactions.indexOf(index) != 0) {
+                                snipeLayout.visibility = View.VISIBLE
+                            }
                             requestLayout()
                         }
 
