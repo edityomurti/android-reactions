@@ -89,7 +89,6 @@ class ReactionLottieViewGroup(context: Context, private val config: ReactionsLot
                         )
                 it.addView(bottomInfoText)
                 addView(it)
-                println("bottomInfo create layoutParams.height = ${it.layoutParams.height}")
             }
 
     private val reactionText: TextView = TextView(context)
@@ -216,8 +215,6 @@ class ReactionLottieViewGroup(context: Context, private val config: ReactionsLot
                     dialogX + dialogWidth + translationX,
                     dialogY + dialogHeight + translationY
             )
-
-            println("bottomInfo backgrund layoutParams.height = ${view.layoutParams.height}")
         }
 
         var prevX = 0
@@ -312,9 +309,6 @@ class ReactionLottieViewGroup(context: Context, private val config: ReactionsLot
 
             when (event.action) {
                 MotionEvent.ACTION_MOVE -> {
-                    println("snipeLayout x = ${snipeLayout.x}")
-                    println("snipeLayout onTouch x = ${event.x}")
-                    println("snipeLayout onTouch rawX = ${event.rawX}")
                     // Ignores when appearing
                     if (currentState is ReactionLottieViewState.Boundary.Appear || currentState == null) return true
 
@@ -324,10 +318,7 @@ class ReactionLottieViewGroup(context: Context, private val config: ReactionsLot
                     setSnipeOnTouchListener(event.rawX, event.rawY)
                     val onSnipeLayout = snipeLayout.isIntersected(event.rawX, event.rawY)
 
-                    println("ACTION_MOVE viewReaction = $viewReaction")
-
                     if (onSnipeLayout) {
-                        println("ACTION_MOVE selectedViewReaction  = ${selectedReactionView?.reaction?.fileName}")
                     } else if (viewReaction == null) {
                         currentState = ReactionLottieViewState.WaitingSelection
                     } else if ((currentState as? ReactionLottieViewState.Selected)?.viewReaction != viewReaction) {
@@ -340,17 +331,11 @@ class ReactionLottieViewGroup(context: Context, private val config: ReactionsLot
                         return true
                     }
 
-//                    val reaction = getIntersectedIcon(event.rawX, event.rawY)?.reaction
-//                    val position = reaction?.let { config.reactions.indexOf(it) } ?: -1
                     val snipe = getIntersectedSnipe(event.rawX, event.rawY)?.text?.toString()
                     (currentState as? ReactionLottieViewState.Selected)?.also {
                         reactionSelectedListener?.invoke(config.reactions.indexOf(it.viewReaction.reaction), snipe)
                     }
-//                    if (reactionSelectedListener?.invoke(position, snipe)?.not() == true) {
-//                        currentState = ReactionLottieViewState.WaitingSelection
-//                    } else { // reactionSelectedListener == null or reactionSelectedListener() == true
-//
-//                    }
+
                     dismiss()
                 }
                 MotionEvent.ACTION_CANCEL -> {

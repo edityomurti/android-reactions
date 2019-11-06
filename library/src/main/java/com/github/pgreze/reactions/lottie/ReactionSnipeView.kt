@@ -55,20 +55,11 @@ class ReactionSnipeView constructor(
                 gravity = Gravity.CENTER
             }
 
-            private val location = Point()
-                get() {
-                    if (field.x == 0 || field.y == 0) {
-                        val location = IntArray(2).also(::getLocationOnScreen)
-                        field.set(location[0], location[1])
-                    }
-                    return field
-                }
-
             fun isIntersected(x: Float, y: Float): Boolean {
-                return x >= location.x
-                        && x < location.x + width
-                        && y >= location.y
-                        && y < location.y + height
+                return x >= getCurrentLocation().x
+                        && x < getCurrentLocation().x + width
+                        && y >= getCurrentLocation().y
+                        && y < getCurrentLocation().y + height
             }
 
             fun onTouchListener(x: Float, y: Float) {
@@ -77,6 +68,11 @@ class ReactionSnipeView constructor(
                 } else {
                     setTypeface(null, Typeface.NORMAL)
                 }
+            }
+
+            private fun getCurrentLocation(): Point {
+                val location = IntArray(2).also(::getLocationOnScreen)
+                return Point(location[0], location[1])
             }
         }
 
