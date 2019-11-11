@@ -3,9 +3,11 @@ package com.github.pgreze.reactions.lottie
 import android.animation.Animator
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
 import android.graphics.Color
 import android.graphics.Point
+import android.graphics.Rect
 import android.util.Log
 import android.util.TypedValue
 import android.view.*
@@ -15,7 +17,6 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import com.github.pgreze.reactions.*
 import kotlin.math.max
-import kotlin.math.min
 import kotlin.math.roundToInt
 
 /**
@@ -34,7 +35,7 @@ class ReactionLottieViewGroup(context: Context, private val config: ReactionsLot
 
     private var smallIconSize: Float
     private var mediumIconSize: Float = config.reactionSize.toFloat()
-    private var largeIconSize: Float = 1.4f * mediumIconSize
+    private var largeIconSize: Float = 1.2f * mediumIconSize
 
     private var firstClick = Point()
     private var parentLocation = Point()
@@ -42,6 +43,8 @@ class ReactionLottieViewGroup(context: Context, private val config: ReactionsLot
 
     private var dialogWidth: Int
     private var dialogHeight: Int = (mediumIconSize + 2 * verticalPadding).toInt()
+
+    private var isDownwardLayout = false
 
     init {
         val nIcons = config.reactions.size
@@ -57,22 +60,15 @@ class ReactionLottieViewGroup(context: Context, private val config: ReactionsLot
                 ) / nIcons.minus(1)
     }
 
-//    private val background = RoundedLottieView(context, config)
-//            .also {
-//                it.layoutParams = LayoutParams(dialogWidth, dialogHeight)
-//                addView(it)
-//            }
     private val background = FrameLayout(context)
             .also {
                 it.layoutParams = LayoutParams(dialogWidth, dialogHeight)
-                it.setBackgroundResource(R.drawable.reactions_bg_reaction_lottie_view_group)
                 addView(it)
             }
 
     private val bottomInfo = LinearLayout(context)
             .also {
                 it.layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
-                it.setBackgroundResource(R.drawable.reactions_bg_bottom_info)
                 it.gravity = Gravity.CENTER
                 val bottomInfoText = TextView(context).also { tv ->
                     tv.layoutParams = LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
@@ -94,7 +90,6 @@ class ReactionLottieViewGroup(context: Context, private val config: ReactionsLot
     private val snipeArrow: ImageView = ImageView(context).also {
         it.layoutParams = LayoutParams(context.toDp(14), context.toDp(10))
         it.setImageResource(R.drawable.reactions_arrow_snipe)
-        it.rotation = 180f
     }
 
     private val snipeList = listOf(
@@ -105,7 +100,8 @@ class ReactionLottieViewGroup(context: Context, private val config: ReactionsLot
 
     private val snipeLayout: ReactionSnipeLayout = ReactionSnipeLayout(context, dialogWidth, snipeArrow, snipeList)
             .also {
-                addView(it)
+                println("VotePopUp snipeLayout created")
+//                addView(it)
             }
 
     private val reactions: List<ReactionLottieView> = config.reactions
@@ -118,8 +114,18 @@ class ReactionLottieViewGroup(context: Context, private val config: ReactionsLot
             }
             .toList()
 
+
+    private val statusBarHeight: Int by lazy(LazyThreadSafetyMode.NONE)
+            /*get()*/ {
+        val rect = Rect(0,0,0,0)
+        val window = (context as? Activity)?.window
+        window?.decorView?.getWindowVisibleDisplayFrame(rect)
+        rect.top
+    }
+
     private var dialogX: Int = 0
     private var dialogY: Int = 0
+    private var snipeDialogY: Int = 0
 
     private var currentState: ReactionLottieViewState? = null
         set(value) {
@@ -140,7 +146,11 @@ class ReactionLottieViewGroup(context: Context, private val config: ReactionsLot
             field?.cancel()
 
             field = value
+
+            removeView(snipeLayout)
             snipeLayout.visibility = View.GONE
+            snipeLayout.hide()
+
             field?.duration = 100
             field?.start()
         }
@@ -157,6 +167,7 @@ class ReactionLottieViewGroup(context: Context, private val config: ReactionsLot
     // Advanced sample: https://github.com/frogermcs/LikeAnimation/tree/master/app/src/main/java/frogermcs/io/likeanimation
 
     override fun onSizeChanged(width: Int, height: Int, oldW: Int, oldH: Int) {
+        println("VotePopUp onSizeChanged()")
         super.onSizeChanged(width, height, oldW, oldH)
 
         dialogX = when (config.popupGravity) {
@@ -183,29 +194,55 @@ class ReactionLottieViewGroup(context: Context, private val config: ReactionsLot
         }
 
         // Y position will be slightly on top of parent view
-        dialogY = parentLocation.y - dialogHeight * 2
-        if (dialogY < 0) {
+//        println("VotePopUp onSizeChanged parentLocation.y : ${parentLocation.y}")
+//        println("VotePopUp onSizeChanged dialogHeight : ${dialogHeight}")
+//        println("VotePopUp onSizeChanged bottomInfo.height : ${bottomInfo.layoutParams.height}")
+
+        val pixelGap = statusBarHeight + statusBarHeight / 2
+
+        dialogY = parentLocation.y - dialogHeight - bottomInfo.layoutParams.height * 2 + pixelGap
+        snipeDialogY = dialogY - snipeLayout.layoutParams.height * 2
+//        println("VotePopUp onSizeChanged dialogY : $dialogY")
+//        println("VotePopUp onSizeChanged snipeLayout.layoutParams.height : ${snipeLayout.layoutParams.height}")
+//        println("VotePopUp onSizeChanged snipeDialogY : $snipeDialogY")
+//        println("VotePopUp onSizeChanged statusBarHeight : $statusBarHeight")
+        isDownwardLayout = snipeDialogY < statusBarHeight
+        if (isDownwardLayout) {
             // Below parent view
-            dialogY = parentLocation.y + parentSize.height + dialogHeight
+//            println("VotePopUp onSizeChanged dialogY changed parentLocation.y : ${parentLocation.y}")
+//            println("VotePopUp onSizeChanged dialogY changed parentSize.height : ${parentSize.height}")
+//            println("VotePopUp onSizeChanged dialogY changed snipeLayout.layoutParams.height : ${snipeLayout.layoutParams.height}")
+            dialogY = parentLocation.y + parentSize.height + bottomInfo.layoutParams.height - pixelGap
+            snipeDialogY = dialogY - snipeLayout.layoutParams.height * 2
+//            println("VotePopUp onSizeChanged dialogY changedTo : $dialogY")
         }
     }
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
+        println("VotePopUp onLayout")
         background.also { view ->
             val translationX = view.translationX.toInt()
-            val translationY = view.translationY.toInt()
+            val translationY = 0 //view.translationY.toInt()
+
+            view.setBackgroundResource(if (!isDownwardLayout) R.drawable.reactions_bg_reaction_lottie_view_group else R.drawable.reactions_bg_reaction_lottie_view_group_downward)
+
             view.layout(
                     dialogX + translationX,
                     (dialogY + mediumIconSize - view.layoutParams.height + translationY).toInt(),
+//                    (dialogY + mediumIconSize - view.layoutParams.height + translationY).toInt(),
                     dialogX + dialogWidth + translationX,
                     dialogY + dialogHeight + translationY
             )
+
+//            println("VotePopUp onLayout background.top = ${view.top}")
+//            println("VotePopUp onLayout dialogY + mediumIconSize - view.layoutParams.height + translationY")
+//            println("VotePopUp onLayout $dialogY + $mediumIconSize - ${view.layoutParams.height} + $translationY")
         }
 
         var prevX = 0
         reactions.forEach { view ->
             val translationX = view.translationX.toInt()
-            val translationY = view.translationY.toInt()
+            val translationY = 0//view.translationY.toInt()
 
             val bottom = dialogY + dialogHeight - verticalPadding + translationY
             val top = bottom - view.layoutParams.height + translationY
@@ -219,11 +256,16 @@ class ReactionLottieViewGroup(context: Context, private val config: ReactionsLot
         if (snipeLayout.visibility == View.VISIBLE) {
             snipeLayout.also { view ->
                 val translationX = view.translationX.toInt()
-                val translationY = view.translationY.toInt()
+                val translationY = 0//view.translationY.toInt()
 
                 view.measure(0, 0)
 
-                val top = dialogY + mediumIconSize - background.layoutParams.height + translationY - view.measuredHeight
+                val top =  if (!isDownwardLayout) {
+                    dialogY + mediumIconSize - background.layoutParams.height + translationY - view.measuredHeight
+                } else {
+                    (dialogY + dialogHeight).toFloat()
+                }
+
                 val bottom = top + view.measuredHeight
                 val left = dialogX + translationX
                 val right = dialogX + dialogWidth + translationX
@@ -239,18 +281,32 @@ class ReactionLottieViewGroup(context: Context, private val config: ReactionsLot
                 val selectedReactionView = (currentState as? ReactionLottieViewState.Selected)?.viewReaction ?: return
                 val left = (selectedReactionView.left + (selectedReactionView.right - selectedReactionView.left) / 2f - view.measuredWidth / 2f) - dialogX
                 val right = left + view.measuredWidth
+
+                if (!isDownwardLayout) {
+                    view.rotation = 180f
+                }
+
                 view.layout(left.toInt(), view.top,  right.toInt(), view.bottom)
             }
         }
 
         bottomInfo.also { view ->
             val translationX = view.translationX.toInt()
-            val translationY = view.translationY.toInt()
+            val translationY = 0//view.translationY.toInt()
             view.measure(0, 0)
-            val top = dialogY + dialogHeight + translationY - context.toDp(2)
-            val bottom = top + view.measuredHeight
-            val left = dialogX + translationX
-            val right = dialogX + dialogWidth + translationX
+            var clippedMargin = context.toDp(2)
+
+            var top = dialogY + dialogHeight + translationY - clippedMargin
+            var bottom = top + view.measuredHeight
+            var left = dialogX + translationX
+            var right = dialogX + dialogWidth + translationX
+
+            if (isDownwardLayout) {
+                top = dialogY - view.measuredHeight + translationY + clippedMargin
+                bottom = top + view.measuredHeight
+            }
+
+            view.setBackgroundResource(if (!isDownwardLayout) R.drawable.reactions_bg_bottom_info else R.drawable.reactions_bg_bottom_info_downward)
 
             view.layout(
                     left,
@@ -262,6 +318,7 @@ class ReactionLottieViewGroup(context: Context, private val config: ReactionsLot
     }
 
     fun show(event: MotionEvent, parent: View) {
+        println("VotePopUp show")
         this.firstClick = Point(event.rawX.roundToInt(), event.rawY.roundToInt())
         this.parentLocation = IntArray(2)
                 .also(parent::getLocationOnScreen)
@@ -339,8 +396,8 @@ class ReactionLottieViewGroup(context: Context, private val config: ReactionsLot
             reactions.firstOrNull {
                 x >= it.location.x - horizontalPadding
                         && x < it.location.x + it.width + iconDivider
-                        && y >= it.location.y - horizontalPadding
-                        && y < it.location.y + it.height + dialogHeight + iconDivider
+                        && (if (!isDownwardLayout) {y >= it.location.y - horizontalPadding} else {y >= it.location.y + horizontalPadding - dialogHeight - iconDivider}) // top boundary
+                        && (if (!isDownwardLayout) {y < it.location.y + it.height + dialogHeight + iconDivider} else {y < it.location.y + it.height + verticalPadding}) // bot boundary
             }
 
     private fun getIntersectedSnipe(x: Float, y: Float): ReactionSnipeView.SnipeAction.SnipeActionText? =
@@ -439,7 +496,10 @@ class ReactionLottieViewGroup(context: Context, private val config: ReactionsLot
                         override fun onAnimationEnd(animation: Animator?) {
                             val index = state?.viewReaction ?: return
                             if (reactions.indexOf(index) != 0) {
+                                println("VotePopUp snipelayout VISIBLE")
+                                addView(snipeLayout)
                                 snipeLayout.visibility = View.VISIBLE
+                                snipeLayout.show(isDownwardLayout)
                             }
                             requestLayout()
                         }

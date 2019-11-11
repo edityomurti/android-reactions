@@ -11,19 +11,47 @@ import android.widget.LinearLayout
  * Created by edityomurti on 2019-11-06 16:50
  */
 
-class ReactionSnipeLayout(context: Context, dialogWidth: Int, snipeArrow: ImageView, snipeList: List<ReactionSnipeView.SnipeAction.SnipeActionText>) : LinearLayout(context) {
+class ReactionSnipeLayout(
+        context: Context, dialogWidth: Int,
+        val snipeArrow: ImageView,
+        val snipeList: List<ReactionSnipeView.SnipeAction.SnipeActionText>
+) : LinearLayout(context) {
+
+    val reactionSnipeView = ReactionSnipeView(context, snipeList)
+            .also { snipeView ->
+                snipeView.layoutParams = LinearLayout.LayoutParams(dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT)
+            }
+
     init {
         layoutParams = LinearLayout.LayoutParams(dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT)
         orientation = LinearLayout.VERTICAL
         visibility = View.GONE
 
-        val reactionSnipeView = ReactionSnipeView(context, snipeList)
-                .also { snipeView ->
-                    snipeView.layoutParams = LinearLayout.LayoutParams(dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT)
-                }
-        addView(reactionSnipeView)
-        addView(snipeArrow)
+//        if (snipeArrow.parent != null) {
+//            (snipeArrow.parent as ViewGroup).removeView(snipeArrow)
+//        }
+//
+//        if (reactionSnipeView.parent != null) {
+//            (reactionSnipeView.parent as ViewGroup).removeView(reactionSnipeView)
+//        }
 
+    }
+
+    fun show(downward: Boolean) {
+        if (!downward) {
+            addView(reactionSnipeView)
+            addView(snipeArrow)
+        } else {
+            addView(snipeArrow)
+            addView(reactionSnipeView)
+        }
+        reactionSnipeView.show(downward)
+    }
+
+    fun hide() {
+        removeView(reactionSnipeView)
+        removeView(snipeArrow)
+        reactionSnipeView.hide()
     }
 
     fun isIntersected(x: Float, y: Float): Boolean {

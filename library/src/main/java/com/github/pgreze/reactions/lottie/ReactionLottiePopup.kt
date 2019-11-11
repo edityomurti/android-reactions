@@ -9,6 +9,7 @@ import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Handler
+import android.os.Looper
 import android.view.*
 import android.widget.FrameLayout
 import android.widget.PopupWindow
@@ -55,7 +56,7 @@ class ReactionLottiePopup @JvmOverloads constructor(
         height = ViewGroup.LayoutParams.MATCH_PARENT
         isFocusable = true
         setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-        handler = Handler()
+        handler = Handler(Looper.getMainLooper())
     }
 
     private var isHandlerRunning = false
@@ -64,9 +65,9 @@ class ReactionLottiePopup @JvmOverloads constructor(
     inner class ShowPopupRunner(val v: View, val event: MotionEvent) : Runnable {
         override fun run() {
             // Show fullscreen with button as context provider
+            isHandlerRunning = false
             showAtLocation(v, Gravity.NO_GRAVITY, 0, 0)
             view.show(event, v)
-            isHandlerRunning = false
         }
     }
 
@@ -81,14 +82,16 @@ class ReactionLottiePopup @JvmOverloads constructor(
                     recyclerView?.requestDisallowInterceptTouchEvent(true)
                 }
                 MotionEvent.ACTION_MOVE -> {
-                    if (onTouched) {
-                        if (isHandlerRunning) {
-                            onTouched = false
-                            isHandlerRunning = false
-                            handler.removeCallbacksAndMessages(null)
-                            recyclerView?.requestDisallowInterceptTouchEvent(false)
-                        }
-                    }
+//                    CAUSING BUG ON LARGE PIXELED PHONE
+//                    println("VotePopUp ACTION_MOVE")
+//                    if (onTouched) {
+//                        if (isHandlerRunning) {
+//                            onTouched = false
+//                            isHandlerRunning = false
+//                            handler.removeCallbacksAndMessages(null)
+//                            recyclerView?.requestDisallowInterceptTouchEvent(false)
+//                        }
+//                    }
                 }
                 MotionEvent.ACTION_UP -> {
                     if (onTouched) {
@@ -100,7 +103,6 @@ class ReactionLottiePopup @JvmOverloads constructor(
                         isHandlerRunning = false
                         handler.removeCallbacksAndMessages(null)
                         recyclerView?.requestDisallowInterceptTouchEvent(false)
-
                     }
                 }
             }

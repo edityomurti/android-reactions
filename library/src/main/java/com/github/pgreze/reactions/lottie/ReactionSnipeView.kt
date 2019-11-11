@@ -20,19 +20,37 @@ import kotlin.math.roundToInt
 
 class ReactionSnipeView constructor(
         context: Context,
-        snipeActionTextList: List<SnipeAction.SnipeActionText>
+        val snipeActionTextList: List<SnipeAction.SnipeActionText>
 ) : LinearLayout(context) {
+
+    val snipeInfo = SnipeAction.SnipeActionInfo(context, "Geser atas untuk pilih side note")
 
     init {
         layoutParams = LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
         orientation = LinearLayout.VERTICAL
         gravity = Gravity.CENTER
         setBackgroundResource(R.drawable.reactions_bg_snipe)
+    }
 
-        val snipeInfo = SnipeAction.SnipeActionInfo(context, "Geser atas untuk pilih side note")
-        addView(snipeInfo)
+    fun show(downward: Boolean) {
+        snipeInfo.setText("Geser ${if (!downward) "atas" else "bawah"}  untuk pilih side note")
+        if (!downward) {
+            addView(snipeInfo)
+            snipeActionTextList.forEach {
+                addView(it)
+            }
+        } else {
+            snipeActionTextList.asReversed().forEach {
+                addView(it)
+            }
+            addView(snipeInfo)
+        }
+    }
+
+    fun hide() {
+        removeView(snipeInfo)
         snipeActionTextList.forEach {
-            addView(it)
+            removeView(it)
         }
     }
 
