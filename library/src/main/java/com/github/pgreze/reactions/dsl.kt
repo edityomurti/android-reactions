@@ -2,6 +2,7 @@ package com.github.pgreze.reactions.dsl
 
 import android.content.Context
 import android.graphics.drawable.Drawable
+import android.util.TypedValue
 import android.widget.ImageView
 import androidx.core.content.ContextCompat
 import com.github.pgreze.reactions.*
@@ -72,4 +73,11 @@ class ReactionBuilderBlock(private val context: Context) {
 
     infix fun Drawable.scale(scaleType: ImageView.ScaleType) =
             Reaction(image = this, scaleType = scaleType)
+}
+
+
+
+fun Context.toDp(value: Int): Int {
+    return Math.round(TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP, value.toFloat(), resources.displayMetrics))
 }

@@ -3,11 +3,16 @@ package com.github.pgreze.reactions
 import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.Drawable
+import android.util.TypedValue
 import android.widget.ImageView
 import androidx.annotation.ArrayRes
 import androidx.annotation.ColorInt
 import androidx.annotation.Px
 import androidx.core.content.ContextCompat
+import com.github.pgreze.reactions.dsl.toDp
+import com.github.pgreze.reactions.lottie.ReactionLottieView
+import com.github.pgreze.reactions.lottie.ReactionLottieView.Companion.TYPE_REACTION.*
+import com.github.pgreze.reactions.lottie.ReactionLottieViewGroup
 import kotlin.math.roundToInt
 
 /**
@@ -17,7 +22,7 @@ import kotlin.math.roundToInt
  */
 typealias ReactionSelectedListener = (position: Int) -> Boolean
 
-typealias ReactionLottieSelectedListener = (position: Int, snipe: String?) -> Boolean
+typealias ReactionLottieSelectedListener = (votable: Boolean, reactionId: String?, snipeId: String?) -> Boolean
 
 typealias OnClickVoteLister = () -> Unit
 
@@ -34,8 +39,22 @@ data class Reaction(
 )
 
 data class ReactionLottie(
-    val fileName: String
-)
+    val typeReaction: ReactionLottieView.Companion.TYPE_REACTION
+) {
+    val id: String?
+        get() {
+            return when(typeReaction) {
+                REACTION_UPVOTE -> null
+                REACTION_SLIGHT_SMILE -> ":slight_smile:"
+                REACTION_GRINNING -> ":grinning:"
+                REACTION_THUMBSUP -> ":thumbsup:"
+                REACTION_DOWNVOTE -> null
+                REACTION_NEUTRAL_FACE -> ":neutral_face:"
+                REACTION_SLIGHT_FROWN -> ":slight_frown:"
+                REACTION_THUMBSDOWN -> ":thumbsdown:"
+            }
+        }
+}
 
 data class ReactionsConfig(
         val reactions: Collection<Reaction>,
@@ -56,7 +75,7 @@ data class ReactionsConfig(
 )
 
 data class ReactionsLottieConfig(
-    val reactions: Collection<ReactionLottie>,
+    val typeVote: ReactionLottieViewGroup.Companion.TypeVote,
     @Px val reactionSize: Int,
     @Px val horizontalMargin: Int,
     @Px val verticalMargin: Int,
@@ -65,13 +84,14 @@ data class ReactionsLottieConfig(
     /** Margin between dialog and screen border used by [PopupGravity] screen related values. */
     val popupMargin: Int,
     @ColorInt val popupColor: Int,
-    val reactionTextProvider: ReactionTextProvider,
     val textBackground: Drawable,
     @ColorInt val textColor: Int,
     val textHorizontalPadding: Int,
     val textVerticalPadding: Int,
     val textSize: Float
-)
+) {
+    val reactionCount = 4
+}
 
 private val NO_TEXT_PROVIDER: ReactionTextProvider = { _ -> null }
 
@@ -227,12 +247,7 @@ class ReactionsLottieConfigBuilder(val context: Context) {
 
     // DSL friendly property based values, with default or empty values replaced during build
 
-    var reactions: Collection<ReactionLottie> = emptyList()
-
-    // reactions = listOf(R.drawable.img1, R.drawable.img2, ...)
-    var reactionFileNames: Array<String>
-        get() = throw NotImplementedError()
-        set(value) { withReactions(value) }
+    var typeVote: ReactionLottieViewGroup.Companion.TypeVote = ReactionLottieViewGroup.Companion.TypeVote.VOTE_UPVOTE
 
     @Px
     var reactionSize: Int =
@@ -244,19 +259,12 @@ class ReactionsLottieConfigBuilder(val context: Context) {
 
     @Px var verticalMargin: Int = horizontalMargin
 
-    var popupGravity: PopupGravity = PopupGravity.DEFAULT
+    var popupGravity: PopupGravity = PopupGravity.SCREEN_LEFT
 
-//    var popupMargin: Int = horizontalMargin
-    var popupMargin: Int = 0
+    var popupMargin: Int = context.toDp(16)
 
     @ColorInt
     var popupColor: Int = Color.WHITE
-
-    var reactionTextProvider: ReactionTextProvider = NO_TEXT_PROVIDER
-
-    var reactionTexts: Int
-        get() = throw NotImplementedError()
-        set(@ArrayRes value) { withReactionTexts(value) }
 
     var textBackground: Drawable? = null
 
@@ -267,28 +275,9 @@ class ReactionsLottieConfigBuilder(val context: Context) {
 
     var textVerticalPadding: Int = 0
 
-    var textSize: Float = 0f
+    var textSize: Float = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 14f, context.resources.displayMetrics)
 
     // Builder pattern for Java
-
-    fun withReactions(reactions: Collection<ReactionLottie>) = this.also {
-        this.reactions = reactions
-    }
-
-    fun withReactions(
-        fileNames: Array<String>
-    ) = withReactions(fileNames.map {
-        ReactionLottie(it)
-    })
-
-    fun withReactionTexts(reactionTextProvider: ReactionTextProvider) = this.also {
-        this.reactionTextProvider = reactionTextProvider
-    }
-
-    fun withReactionTexts(@ArrayRes res: Int) = this.also {
-        reactionTextProvider = context.resources.getStringArray(res)::get
-    }
-
     fun withReactionSize(reactionSize: Int) = this.also {
         this.reactionSize = reactionSize
     }
@@ -334,15 +323,13 @@ class ReactionsLottieConfigBuilder(val context: Context) {
     }
 
     fun build() = ReactionsLottieConfig(
-        reactions = reactions.takeIf { it.isNotEmpty() }
-            ?: throw IllegalArgumentException("Empty reactions"),
+        typeVote = typeVote,
         popupGravity = popupGravity,
         popupMargin = popupMargin,
         popupColor = popupColor,
         reactionSize = reactionSize,
         horizontalMargin = horizontalMargin,
         verticalMargin = verticalMargin,
-        reactionTextProvider = reactionTextProvider,
         textBackground = textBackground
             ?: ContextCompat.getDrawable(context, R.drawable.reactions_text_background)!!,
         textColor = textColor,

@@ -18,15 +18,15 @@ import androidx.recyclerview.widget.RecyclerView
 import com.github.pgreze.reactions.OnClickVoteLister
 import com.github.pgreze.reactions.ReactionLottieSelectedListener
 import com.github.pgreze.reactions.ReactionsLottieConfig
+import com.github.pgreze.reactions.dsl.reactionConfig
 
 /**
  * Entry point for reaction popup.
  */
 class ReactionLottiePopup @JvmOverloads constructor(
         context: Context,
-        reactionsConfig: ReactionsLottieConfig,
+        val reactionsConfig: ReactionsLottieConfig,
         val recyclerView: RecyclerView? = null,
-        var onClickListener: OnClickVoteLister,
         var reactionSelectedListener: ReactionLottieSelectedListener? = null
 ) : PopupWindow(context), View.OnTouchListener {
     private var handler: Handler
@@ -115,7 +115,7 @@ class ReactionLottiePopup @JvmOverloads constructor(
                 MotionEvent.ACTION_UP -> {
                     if (onTouched) {
                         if (isHandlerRunning) {
-                            onClickListener()
+                            reactionSelectedListener?.invoke(reactionsConfig.typeVote == ReactionLottieViewGroup.Companion.TypeVote.VOTE_UPVOTE, null, null)
                         }
 
                         onTouched = false

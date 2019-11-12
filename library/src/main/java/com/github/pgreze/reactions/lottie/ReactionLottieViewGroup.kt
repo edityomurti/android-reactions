@@ -16,8 +16,11 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.github.pgreze.reactions.*
+import com.github.pgreze.reactions.dsl.toDp
 import kotlin.math.max
 import kotlin.math.roundToInt
+import com.github.pgreze.reactions.lottie.ReactionLottieView.Companion.TYPE_REACTION
+import com.github.pgreze.reactions.lottie.ReactionSnipeView.Companion.TYPE_SNIPE
 
 /**
  * Created by edityomurti on 2019-10-28 19:28
@@ -47,17 +50,17 @@ class ReactionLottieViewGroup(context: Context, private val config: ReactionsLot
     private var isDownwardLayout = false
 
     init {
-        val nIcons = config.reactions.size
+        val reactionCount = config.reactionCount
 
         dialogWidth = (horizontalPadding * 2 +
-                mediumIconSize * nIcons +
-                iconDivider * nIcons.minus(1)).toInt()
+                mediumIconSize * reactionCount +
+                iconDivider * reactionCount.minus(1)).toInt()
 
         smallIconSize = (dialogWidth
                 - horizontalPadding * 2
                 - largeIconSize
-                - iconDivider * nIcons.minus(1)
-                ) / nIcons.minus(1)
+                - iconDivider * reactionCount.minus(1)
+                ) / reactionCount.minus(1)
     }
 
     private val background = FrameLayout(context)
@@ -92,15 +95,34 @@ class ReactionLottieViewGroup(context: Context, private val config: ReactionsLot
         it.setImageResource(R.drawable.reactions_arrow_snipe)
     }
 
-    private val snipeList = listOf(
-            ReactionSnipeView.SnipeAction.SnipeActionText(context, "Bermanfaat", "bermanfaat"),
-            ReactionSnipeView.SnipeAction.SnipeActionText(context, "Bernas", "bernas"),
-            ReactionSnipeView.SnipeAction.SnipeActionText(context, "Pantas Dicermati", "pantas_dicermati")
-    )
+    private val snipeList = if (config.typeVote == TypeVote.VOTE_UPVOTE) {
+        listOf(
+                ReactionSnipeView.SnipeAction.SnipeActionText(context, TYPE_SNIPE.SNIPE_TERIMAKASIH),
+                ReactionSnipeView.SnipeAction.SnipeActionText(context, TYPE_SNIPE.SNIPE_BERMANFAAT),
+                ReactionSnipeView.SnipeAction.SnipeActionText(context, TYPE_SNIPE.SNIPE_BERNAS)
+        )
+    } else {
+        listOf(
+                ReactionSnipeView.SnipeAction.SnipeActionText(context, TYPE_SNIPE.SNIPE_SALAH_KONTEKS),
+                ReactionSnipeView.SnipeAction.SnipeActionText(context, TYPE_SNIPE.SNIPE_DISINFORMASI),
+                ReactionSnipeView.SnipeAction.SnipeActionText(context, TYPE_SNIPE.SNIPE_SPAM)
+        )
+    }
 
     private val snipeLayout: ReactionSnipeLayout = ReactionSnipeLayout(context, dialogWidth, snipeArrow, snipeList)
 
-    private val reactions: List<ReactionLottieView> = config.reactions
+    private val reactions: List<ReactionLottieView> = (
+            listOf(
+                ReactionLottie(TYPE_REACTION.REACTION_UPVOTE),
+                ReactionLottie(TYPE_REACTION.REACTION_SLIGHT_SMILE),
+                ReactionLottie(TYPE_REACTION.REACTION_GRINNING),
+                ReactionLottie(TYPE_REACTION.REACTION_THUMBSUP)
+            ).takeUnless { config.typeVote == TypeVote.VOTE_DOWNVOTE } ?:
+            listOf(
+                ReactionLottie(TYPE_REACTION.REACTION_DOWNVOTE),
+                ReactionLottie(TYPE_REACTION.REACTION_NEUTRAL_FACE),
+                ReactionLottie(TYPE_REACTION.REACTION_SLIGHT_FROWN),
+                ReactionLottie(TYPE_REACTION.REACTION_THUMBSDOWN) ))
             .map {
                 ReactionLottieView(context, it).also {
                     it.layoutParams = LayoutParams(mediumIconSize.toInt(), mediumIconSize.toInt())
@@ -109,7 +131,6 @@ class ReactionLottieViewGroup(context: Context, private val config: ReactionsLot
                 }
             }
             .toList()
-
 
     private val statusBarHeight: Int by lazy(LazyThreadSafetyMode.NONE)
             /*get()*/ {
@@ -219,7 +240,6 @@ class ReactionLottieViewGroup(context: Context, private val config: ReactionsLot
             view.layout(
                     dialogX + translationX,
                     (dialogY + mediumIconSize - view.layoutParams.height + translationY).toInt(),
-//                    (dialogY + mediumIconSize - view.layoutParams.height + translationY).toInt(),
                     dialogX + dialogWidth + translationX,
                     dialogY + dialogHeight + translationY
             )
@@ -358,9 +378,9 @@ class ReactionLottieViewGroup(context: Context, private val config: ReactionsLot
                         return true
                     }
 
-                    val snipe = getIntersectedSnipe(event.rawX, event.rawY)?.text?.toString()
-                    (currentState as? ReactionLottieViewState.Selected)?.also {
-                        reactionSelectedListener?.invoke(config.reactions.indexOf(it.viewReaction.reaction), snipe)
+                    val snipe = getIntersectedSnipe(event.rawX, event.rawY)
+                    (currentState as? ReactionLottieViewState.Selected)?.also { selectedReaction ->
+                        reactionSelectedListener?.invoke(config.typeVote == TypeVote.VOTE_UPVOTE, selectedReaction.viewReaction.reaction.id, snipe?.id)
                     }
 
                     dismiss()
@@ -506,6 +526,12 @@ class ReactionLottieViewGroup(context: Context, private val config: ReactionsLot
                     })
                 }
     }
+
+    companion object {
+        enum class TypeVote {
+            VOTE_UPVOTE, VOTE_DOWNVOTE
+        }
+    }
 }
 
 private var ViewGroup.LayoutParams.size: Int
@@ -529,11 +555,6 @@ private fun progressMove(from: Int, to: Int, progress: Float): Int =
 
 private fun Pair<Int, Int>.progressMove(progress: Float): Int =
         progressMove(first, second, progress)
-
-private fun Context.toDp(value: Int): Int {
-    return Math.round(TypedValue.applyDimension(
-            TypedValue.COMPLEX_UNIT_DIP, value.toFloat(), resources.displayMetrics))
-}
 
 sealed class ReactionLottieViewState {
 

@@ -6,12 +6,12 @@ import android.graphics.Point
 import android.graphics.Typeface
 import android.util.TypedValue
 import android.view.Gravity
-import android.view.MotionEvent
-import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.github.pgreze.reactions.R
+import com.github.pgreze.reactions.dsl.toDp
+import com.github.pgreze.reactions.lottie.ReactionSnipeView.Companion.TYPE_SNIPE.*
 import kotlin.math.roundToInt
 
 /**
@@ -56,20 +56,35 @@ class ReactionSnipeView constructor(
 
     sealed class SnipeAction(context: Context) : TextView(context){
 
-        class SnipeActionText(context: Context, textCaption: CharSequence, id: String): SnipeAction(context) {
-            val id: String = id
+        class SnipeActionText(context: Context, typeSnipe: TYPE_SNIPE): SnipeAction(context) {
+            var id: String
 
             init {
                 layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
                 setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
                 setTextColor(Color.parseColor("#353e4a"))
                 setPadding(
-                        toDp(4),
-                        toDp(12),
-                        toDp(4),
-                        toDp(12)
+                        context.toDp(4),
+                        context.toDp(12),
+                        context.toDp(4),
+                        context.toDp(12)
                 )
-                text = textCaption
+                id = when (typeSnipe) {
+                    SNIPE_TERIMAKASIH -> ":terima_kasih:"
+                    SNIPE_BERMANFAAT -> ":bermanfaat:"
+                    SNIPE_BERNAS -> ":bernas:"
+                    SNIPE_SALAH_KONTEKS -> ":salah_konteks:"
+                    SNIPE_DISINFORMASI -> ":disinformasi:"
+                    SNIPE_SPAM -> ":spam:"
+                }
+                text = when (typeSnipe) {
+                    SNIPE_TERIMAKASIH -> "Terima Kasih"
+                    SNIPE_BERMANFAAT -> "Bermanfaat"
+                    SNIPE_BERNAS -> "Bernas"
+                    SNIPE_SALAH_KONTEKS -> "Salah Konteks"
+                    SNIPE_DISINFORMASI -> "Disinformasi"
+                    SNIPE_SPAM -> "Spam"
+                }
                 gravity = Gravity.CENTER
             }
 
@@ -100,22 +115,26 @@ class ReactionSnipeView constructor(
                 setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
                 setTextColor(Color.parseColor("#8691a1"))
                 setPadding(
-                        toDp(4),
-                        toDp(12),
-                        toDp(4),
-                        toDp(12)
+                        context.toDp(4),
+                        context.toDp(12),
+                        context.toDp(4),
+                        context.toDp(12)
                 )
                 text = textCaption
                 gravity = Gravity.CENTER
             }
         }
 
-
-        fun toDp(value: Int): Int {
-            return TypedValue.applyDimension(
-                    TypedValue.COMPLEX_UNIT_DIP, value.toFloat(), resources.displayMetrics).roundToInt()
-        }
-
     }
 
+    companion object {
+        enum class TYPE_SNIPE {
+            SNIPE_TERIMAKASIH,
+            SNIPE_BERMANFAAT,
+            SNIPE_BERNAS,
+            SNIPE_SALAH_KONTEKS,
+            SNIPE_DISINFORMASI,
+            SNIPE_SPAM
+        }
+    }
 }

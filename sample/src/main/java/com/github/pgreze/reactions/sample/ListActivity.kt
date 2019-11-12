@@ -17,6 +17,7 @@ import com.afollestad.recyclical.withItem
 import com.github.pgreze.reactions.PopupGravity
 import com.github.pgreze.reactions.dsl.reactionLottieConfig
 import com.github.pgreze.reactions.lottie.ReactionLottiePopup
+import com.github.pgreze.reactions.lottie.ReactionLottieViewGroup
 
 class ListActivity : AppCompatActivity() {
 
@@ -35,27 +36,15 @@ class ListActivity : AppCompatActivity() {
             withItem<String, VoteClassHolder>(R.layout.item_vote) {
                 onBind(::VoteClassHolder) { index, item ->
 
+                    val isUpvote = index % 2 == 0
+
                     val lottieConfig = reactionLottieConfig(this@ListActivity) {
-                        reactionFileNames = arrayOf(
-                                "lottie_reaction_downvote.json",
-                                "lottie_reaction_thumbsup.json",
-                                "lottie_reaction_grinning.json",
-                                "lottie_reaction_neutral_face.json"
-                        )
-                        reactionTextProvider = { position -> "Item $position" }
-                        popupGravity = PopupGravity.SCREEN_LEFT
-                        popupMargin = resources.getDimensionPixelSize(R.dimen.popup_margin)
+                        typeVote = if (isUpvote) ReactionLottieViewGroup.Companion.TypeVote.VOTE_UPVOTE else ReactionLottieViewGroup.Companion.TypeVote.VOTE_DOWNVOTE
                         textBackground = ColorDrawable(Color.TRANSPARENT)
-                        textColor = Color.BLACK
-                        textHorizontalPadding = 0
-                        textVerticalPadding = 0
-                        textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 14f, resources.displayMetrics)
                     }
 
-                    val popupLottie = ReactionLottiePopup(this@ListActivity, lottieConfig, rv, {
-                        toast("VOTE!")
-                    }) { position, snipe -> true.also {
-                        toast("reaction: $position\nsnipe: $snipe")
+                    val popupLottie = ReactionLottiePopup(this@ListActivity, lottieConfig, rv) { isUpvote, reaction, snipe -> true.also {
+                        toast("vote: $isUpvote\nreaction: $reaction\nsnipe: $snipe")
                     } }
 
                     btnVote.text = "Vote $index"

@@ -37,7 +37,7 @@ class RoundedLottieView(context: Context, private val config: ReactionsLottieCon
             (paddingLeft + paddingRight) / 2f
         }
         val bPad = xPad / 2
-        val nIcons = config.reactions.size
+        val nIcons = config.reactionCount
         val regIconSize = (w - (2 * xPad + (nIcons - 1) * bPad)) / nIcons
 //        cornerSize = xPad + regIconSize / 2
 //        cornerSize = Math.round(TypedValue.applyDimension(

@@ -80,30 +80,6 @@ fun MainActivity.setup() {
     } }
     findViewById<View>(R.id.right_btn).setOnTouchListener(popup2)
 
-
-    val lottieConfig = reactionLottieConfig(this) {
-        reactionFileNames = arrayOf(
-                "lottie_reaction_thumbsdown.json",
-                "lottie_reaction_thumbsup.json",
-                "lottie_reaction_grinning.json",
-                "lottie_reaction_neutral_face.json"
-        )
-        reactionTextProvider = { position -> "Item $position" }
-        popupGravity = PopupGravity.CENTER
-        popupMargin = resources.getDimensionPixelSize(R.dimen.crypto_item_size)
-        textBackground = ColorDrawable(Color.TRANSPARENT)
-        textColor = Color.BLACK
-        textHorizontalPadding = 0
-        textVerticalPadding = 0
-        textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 14f, resources.displayMetrics)
-    }
-
-    val popupLottie = ReactionLottiePopup(this, lottieConfig, null, {
-        toast("VOTE!")
-    }) { position, snipe -> true.also {
-        toast("$position selected")
-    } }
-//    findViewById<Button>(R.id.btn_lottie).setOnTouchListener(popupLottie)
     findViewById<Button>(R.id.btn_lottie).setOnClickListener { startActivity(Intent(this, ListActivity::class.java)) }
 
 }
