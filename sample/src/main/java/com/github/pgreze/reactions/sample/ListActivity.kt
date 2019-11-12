@@ -37,7 +37,7 @@ class ListActivity : AppCompatActivity() {
 
                     val lottieConfig = reactionLottieConfig(this@ListActivity) {
                         reactionFileNames = arrayOf(
-                                "lottie_reaction_upvote.json",
+                                "lottie_reaction_downvote.json",
                                 "lottie_reaction_thumbsup.json",
                                 "lottie_reaction_grinning.json",
                                 "lottie_reaction_neutral_face.json"

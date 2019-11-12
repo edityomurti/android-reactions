@@ -37,6 +37,16 @@ class ReactionSnipeLayout(
 
     }
 
+    fun getInitialHeight(): Int {
+        var initialHeight: Int
+        println("getInitialHeight before show : $height")
+        show(false)
+        println("getInitialHeight after show : $height")
+        initialHeight = height
+        hide()
+        return initialHeight
+    }
+
     fun show(downward: Boolean) {
         if (!downward) {
             addView(reactionSnipeView)
@@ -46,6 +56,7 @@ class ReactionSnipeLayout(
             addView(reactionSnipeView)
         }
         reactionSnipeView.show(downward)
+        println("getInitialHeight in show : $height")
     }
 
     fun hide() {

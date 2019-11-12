@@ -99,10 +99,6 @@ class ReactionLottieViewGroup(context: Context, private val config: ReactionsLot
     )
 
     private val snipeLayout: ReactionSnipeLayout = ReactionSnipeLayout(context, dialogWidth, snipeArrow, snipeList)
-            .also {
-                println("VotePopUp snipeLayout created")
-//                addView(it)
-            }
 
     private val reactions: List<ReactionLottieView> = config.reactions
             .map {
@@ -156,7 +152,6 @@ class ReactionLottieViewGroup(context: Context, private val config: ReactionsLot
         }
 
     private var isFirstTouchAlwaysInsideButton = true
-//    private var isIgnoringFirstReaction: Boolean = false
 
     var reactionSelectedListener: ReactionLottieSelectedListener? = null
 
@@ -200,12 +195,19 @@ class ReactionLottieViewGroup(context: Context, private val config: ReactionsLot
 
         val pixelGap = statusBarHeight + statusBarHeight / 2
 
+
+//        snipeLayout.viewTreeObserver.addOnGlobalLayoutListener { snipelayoutHeight = snipeLayout.height }
+
         dialogY = parentLocation.y - dialogHeight - bottomInfo.layoutParams.height * 2 + pixelGap
-        snipeDialogY = dialogY - snipeLayout.layoutParams.height * 2
+
+        snipeDialogY = getSnipeLayoutY()
 //        println("VotePopUp onSizeChanged dialogY : $dialogY")
 //        println("VotePopUp onSizeChanged snipeLayout.layoutParams.height : ${snipeLayout.layoutParams.height}")
-//        println("VotePopUp onSizeChanged snipeDialogY : $snipeDialogY")
-//        println("VotePopUp onSizeChanged statusBarHeight : $statusBarHeight")
+        println("VotePopUp onSizeChanged snipeDialogY dialogY : $dialogY")
+        println("VotePopUp onSizeChanged snipeDialogY mediumIconSize : $mediumIconSize")
+        println("VotePopUp onSizeChanged snipeDialogY background.layoutParams.height : ${background.layoutParams.height}")
+        println("VotePopUp onSizeChanged snipeDialogY : $snipeDialogY")
+        println("VotePopUp onSizeChanged statusBarHeight : $statusBarHeight")
         isDownwardLayout = snipeDialogY < statusBarHeight
         if (isDownwardLayout) {
             // Below parent view
@@ -213,9 +215,22 @@ class ReactionLottieViewGroup(context: Context, private val config: ReactionsLot
 //            println("VotePopUp onSizeChanged dialogY changed parentSize.height : ${parentSize.height}")
 //            println("VotePopUp onSizeChanged dialogY changed snipeLayout.layoutParams.height : ${snipeLayout.layoutParams.height}")
             dialogY = parentLocation.y + parentSize.height + bottomInfo.layoutParams.height - pixelGap
-            snipeDialogY = dialogY - snipeLayout.layoutParams.height * 2
 //            println("VotePopUp onSizeChanged dialogY changedTo : $dialogY")
         }
+    }
+
+    private fun getSnipeLayoutY(): Int {
+        var top: Int
+        addView(snipeLayout)
+        snipeLayout.visibility = View.INVISIBLE
+        snipeLayout.show(false)
+        requestLayout()
+        snipeLayout.measure(0, 0)
+        top = (dialogY + mediumIconSize - background.layoutParams.height - snipeLayout.measuredHeight).toInt()
+        snipeLayout.visibility = View.GONE
+        removeView(snipeLayout)
+        requestLayout()
+        return top
     }
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
@@ -258,13 +273,22 @@ class ReactionLottieViewGroup(context: Context, private val config: ReactionsLot
                 val translationX = view.translationX.toInt()
                 val translationY = 0//view.translationY.toInt()
 
+                println("snipeLayout.height before measure : ${snipeLayout.height}")
+
                 view.measure(0, 0)
+
+                println("snipeLayout.height after measure : ${snipeLayout.height}")
 
                 val top =  if (!isDownwardLayout) {
                     dialogY + mediumIconSize - background.layoutParams.height + translationY - view.measuredHeight
                 } else {
                     (dialogY + dialogHeight).toFloat()
                 }
+                println("VotePopUp snipeDialog.top dialogY = $dialogY")
+                println("VotePopUp snipeDialog.top mediumIconSize = $mediumIconSize")
+                println("VotePopUp snipeDialog.top background.layoutParams.height = ${background.layoutParams.height}")
+                println("VotePopUp snipeDialog.top view.measuredHeight = ${view.measuredHeight}")
+                println("VotePopUp snipeDialog.top = $top")
 
                 val bottom = top + view.measuredHeight
                 val left = dialogX + translationX
@@ -276,6 +300,8 @@ class ReactionLottieViewGroup(context: Context, private val config: ReactionsLot
                         right,
                         bottom.toInt()
                 )
+
+                println("snipeLayout.height after view.layout : ${snipeLayout.height}")
             }
             snipeArrow.also { view ->
                 val selectedReactionView = (currentState as? ReactionLottieViewState.Selected)?.viewReaction ?: return
@@ -502,6 +528,7 @@ class ReactionLottieViewGroup(context: Context, private val config: ReactionsLot
                                 snipeLayout.show(isDownwardLayout)
                             }
                             requestLayout()
+                            println("onAnimationEnd snipeLayout.height = ${snipeLayout.height}")
                         }
 
                         override fun onAnimationCancel(animation: Animator?) {}

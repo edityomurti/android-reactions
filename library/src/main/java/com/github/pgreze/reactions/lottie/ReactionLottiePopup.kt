@@ -7,6 +7,7 @@ package com.github.pgreze.reactions.lottie
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Color
+import android.graphics.Point
 import android.graphics.drawable.ColorDrawable
 import android.os.Handler
 import android.os.Looper
@@ -82,16 +83,34 @@ class ReactionLottiePopup @JvmOverloads constructor(
                     recyclerView?.requestDisallowInterceptTouchEvent(true)
                 }
                 MotionEvent.ACTION_MOVE -> {
-//                    CAUSING BUG ON LARGE PIXELED PHONE
-//                    println("VotePopUp ACTION_MOVE")
-//                    if (onTouched) {
-//                        if (isHandlerRunning) {
-//                            onTouched = false
-//                            isHandlerRunning = false
-//                            handler.removeCallbacksAndMessages(null)
-//                            recyclerView?.requestDisallowInterceptTouchEvent(false)
-//                        }
-//                    }
+                    val parentLocation = IntArray(2)
+                            .also(v::getLocationOnScreen)
+                            .let { Point(it[0], it[1]) }
+
+                    val boundaryLeft = parentLocation.x
+                    val boundaryRight = parentLocation.x + v.width
+                    val boundaryTop = parentLocation.y
+                    val boundaryBot = parentLocation.y + v.height
+
+                    val insideLeft = event.rawX >= boundaryLeft
+                    val insideRight = event.rawX < boundaryRight
+                    val insideTop = event.rawY >= boundaryTop
+                    val insideBot = event.rawY < boundaryBot
+
+                    val outsideBoundaryX = !insideLeft || !insideRight
+                    val outsideBoundaryY = !insideTop || !insideBot
+
+                    if (outsideBoundaryX || outsideBoundaryY) {
+                        if (onTouched) {
+                            if (isHandlerRunning) {
+                                onTouched = false
+                                isHandlerRunning = false
+                                handler.removeCallbacksAndMessages(null)
+                                recyclerView?.requestDisallowInterceptTouchEvent(false)
+                            }
+                        }
+                    }
+
                 }
                 MotionEvent.ACTION_UP -> {
                     if (onTouched) {
