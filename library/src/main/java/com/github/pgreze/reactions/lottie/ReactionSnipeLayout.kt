@@ -14,7 +14,7 @@ import android.widget.LinearLayout
 class ReactionSnipeLayout(
         context: Context, dialogWidth: Int,
         val snipeArrow: ImageView,
-        val snipeList: List<ReactionSnipeView.SnipeAction.SnipeActionText>
+        snipeList: List<ReactionSnipeView.SnipeAction.SnipeActionText>
 ) : LinearLayout(context) {
 
     val reactionSnipeView = ReactionSnipeView(context, snipeList)
@@ -26,25 +26,6 @@ class ReactionSnipeLayout(
         layoutParams = LinearLayout.LayoutParams(dialogWidth, ViewGroup.LayoutParams.WRAP_CONTENT)
         orientation = LinearLayout.VERTICAL
         visibility = View.GONE
-
-//        if (snipeArrow.parent != null) {
-//            (snipeArrow.parent as ViewGroup).removeView(snipeArrow)
-//        }
-//
-//        if (reactionSnipeView.parent != null) {
-//            (reactionSnipeView.parent as ViewGroup).removeView(reactionSnipeView)
-//        }
-
-    }
-
-    fun getInitialHeight(): Int {
-        var initialHeight: Int
-        println("getInitialHeight before show : $height")
-        show(false)
-        println("getInitialHeight after show : $height")
-        initialHeight = height
-        hide()
-        return initialHeight
     }
 
     fun show(downward: Boolean) {

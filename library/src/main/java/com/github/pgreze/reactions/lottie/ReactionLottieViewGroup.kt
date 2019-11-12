@@ -189,47 +189,22 @@ class ReactionLottieViewGroup(context: Context, private val config: ReactionsLot
         }
 
         // Y position will be slightly on top of parent view
-//        println("VotePopUp onSizeChanged parentLocation.y : ${parentLocation.y}")
-//        println("VotePopUp onSizeChanged dialogHeight : ${dialogHeight}")
-//        println("VotePopUp onSizeChanged bottomInfo.height : ${bottomInfo.layoutParams.height}")
-
         val pixelGap = statusBarHeight + statusBarHeight / 2
-
-
-//        snipeLayout.viewTreeObserver.addOnGlobalLayoutListener { snipelayoutHeight = snipeLayout.height }
-
         dialogY = parentLocation.y - dialogHeight - bottomInfo.layoutParams.height * 2 + pixelGap
 
         snipeDialogY = getSnipeLayoutY()
-//        println("VotePopUp onSizeChanged dialogY : $dialogY")
-//        println("VotePopUp onSizeChanged snipeLayout.layoutParams.height : ${snipeLayout.layoutParams.height}")
-        println("VotePopUp onSizeChanged snipeDialogY dialogY : $dialogY")
-        println("VotePopUp onSizeChanged snipeDialogY mediumIconSize : $mediumIconSize")
-        println("VotePopUp onSizeChanged snipeDialogY background.layoutParams.height : ${background.layoutParams.height}")
-        println("VotePopUp onSizeChanged snipeDialogY : $snipeDialogY")
-        println("VotePopUp onSizeChanged statusBarHeight : $statusBarHeight")
         isDownwardLayout = snipeDialogY < statusBarHeight
         if (isDownwardLayout) {
             // Below parent view
-//            println("VotePopUp onSizeChanged dialogY changed parentLocation.y : ${parentLocation.y}")
-//            println("VotePopUp onSizeChanged dialogY changed parentSize.height : ${parentSize.height}")
-//            println("VotePopUp onSizeChanged dialogY changed snipeLayout.layoutParams.height : ${snipeLayout.layoutParams.height}")
             dialogY = parentLocation.y + parentSize.height + bottomInfo.layoutParams.height - pixelGap
-//            println("VotePopUp onSizeChanged dialogY changedTo : $dialogY")
         }
     }
 
     private fun getSnipeLayoutY(): Int {
-        var top: Int
-        addView(snipeLayout)
-        snipeLayout.visibility = View.INVISIBLE
         snipeLayout.show(false)
-        requestLayout()
         snipeLayout.measure(0, 0)
-        top = (dialogY + mediumIconSize - background.layoutParams.height - snipeLayout.measuredHeight).toInt()
-        snipeLayout.visibility = View.GONE
-        removeView(snipeLayout)
-        requestLayout()
+        val top = (dialogY + mediumIconSize - background.layoutParams.height - snipeLayout.measuredHeight).toInt()
+        snipeLayout.hide()
         return top
     }
 
@@ -248,10 +223,6 @@ class ReactionLottieViewGroup(context: Context, private val config: ReactionsLot
                     dialogX + dialogWidth + translationX,
                     dialogY + dialogHeight + translationY
             )
-
-//            println("VotePopUp onLayout background.top = ${view.top}")
-//            println("VotePopUp onLayout dialogY + mediumIconSize - view.layoutParams.height + translationY")
-//            println("VotePopUp onLayout $dialogY + $mediumIconSize - ${view.layoutParams.height} + $translationY")
         }
 
         var prevX = 0
@@ -318,7 +289,6 @@ class ReactionLottieViewGroup(context: Context, private val config: ReactionsLot
 
         bottomInfo.also { view ->
             val translationX = view.translationX.toInt()
-            val translationY = 0//view.translationY.toInt()
             view.measure(0, 0)
             var clippedMargin = context.toDp(2)
 
@@ -336,9 +306,9 @@ class ReactionLottieViewGroup(context: Context, private val config: ReactionsLot
 
             view.layout(
                     left,
-                    top,
+                    top.toInt(),
                     right,
-                    bottom
+                    bottom.toInt()
             )
         }
     }
@@ -351,7 +321,6 @@ class ReactionLottieViewGroup(context: Context, private val config: ReactionsLot
                 .let { Point(it[0], it[1]) }
         parentSize = Size(parent.width, parent.height)
         isFirstTouchAlwaysInsideButton = true
-//        isIgnoringFirstReaction = true
 
         // Resize, could be fixed with later resolved width/height
         onSizeChanged(width, height, width, height)
